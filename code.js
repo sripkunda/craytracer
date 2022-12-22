@@ -51,6 +51,18 @@ Vector3.prototype.toString = function() {
   return "(" + this.x + ", " + this.y + ", " + this.z + ")"; 
 };
 
+Vector3.random = function(min, max) {
+  while (true) {
+    var vec = new Vector3(randBetween(min, max), randBetween(min, max), randBetween(min, max));
+    if (vec.norm() >= 1) continue;
+    return vec;  
+  }
+}
+
+function randBetween(min, max) {
+  return Math.random() * (max - min) + min; 
+}
+
 /* Ray Tracing Stuff */
 
 function Ray(origin, direction) {
@@ -83,29 +95,30 @@ function computeColor(ray, intersection, depth) {
   var lights = scene.lights;
   var rayIntPoint = ray.at(intersection.t);
   var surfaceNormal = object.normal(rayIntPoint);
+  if (--depth < 1) return reflection;  
   
   // Apply Lambertian reflectance (diffuse)
   var lambertianScale = object.material.diffuse; 
   var lambertianAmount = 0; 
   if (lambertianScale > 0) {
     for (var i = 0; i < lights.length; i++) {
-      var light = lights[i]; 
+      var light = lights[i];
       if (light.visible(rayIntPoint, object)) {
         var L = light.position.subtract(rayIntPoint).normalize().inner(surfaceNormal) * light.intensity;
-        lambertianAmount += Math.max(L, 0); 
+        lambertianAmount += Math.max(L, 0);
       }
     }
-    lambertianAmount = Math.min(lambertianAmount, 1); // To make sure the object isn't just absurdly white
+    lambertianAmount = Math.min(lambertianAmount, 1); // To not blow up the colors
+    color.add(object.material.scatter(ray, intersection, depth)); // Scatter the light in a random direction for diffuse shading
   }
   
   // Apply specular reflection
   var specularScale = object.material.specular; 
-  if (specularScale > 0 && depth - 1 > 0) {
+  if (specularScale > 0) {
     var surfaceRay = new Ray(rayIntPoint, Material.reflect(ray.direction, surfaceNormal));
-    reflection = traceRay(surfaceRay, --depth).times(specularScale);
+    reflection = traceRay(surfaceRay, depth).times(specularScale);
   }
   return reflection.add(color.times(lambertianAmount)).add(color.times(object.material.ambient));
-  
 }
 
 function closestIntersection(ray) {
@@ -129,6 +142,14 @@ function Material(diffuse, specular, ambient, color) {
   this.diffuse = diffuse || 0;
   this.specular = specular || 0; 
   this.ambient = ambient || 0; 
+}
+
+Material.prototype.scatter = function(ray, intersection, depth) {
+  var p = ray.at(intersection.t);
+  var hitNormal = intersection.object.normal(p).times(-1);
+  var targ = hitNormal.add(Vector3.random(-1, 1));
+  var r = new Ray(p, targ);
+  return traceRay(r, depth); 
 }
 
 Material.reflect = function (v, normal) {
@@ -492,7 +513,6 @@ onEvent("renderBtn", "click", function() {
 
 onEvent("removeBtn", "click", function() {
   var object = objectOfIndex();
-  console.log(object);
   object.list.splice(object.index, 1);
   initializeBuilder(0);
 });
