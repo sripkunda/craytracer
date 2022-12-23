@@ -97,6 +97,7 @@ function computeColor(ray, intersection, depth) {
   var surfaceNormal = object.normal(rayIntPoint);
   if (--depth < 1) return reflection;  
   
+  
   // Apply Lambertian reflectance (diffuse)
   var lambertianScale = object.material.diffuse; 
   var lambertianAmount = 0; 
@@ -109,7 +110,8 @@ function computeColor(ray, intersection, depth) {
       }
     }
     lambertianAmount = Math.min(lambertianAmount, 1); // To not blow up the colors
-    color.add(object.material.scatter(ray, intersection, depth)); // Scatter the light in a random direction for diffuse shading
+    var rand = object.material.scatter(ray, intersection, lambertianScale, depth);
+    color.add(rand.times(Math.pow(1/2, depth))); // Scatter the light in a random direction for diffuse shading
   }
   
   // Apply specular reflection
@@ -144,11 +146,11 @@ function Material(diffuse, specular, ambient, color) {
   this.ambient = ambient || 0; 
 }
 
-Material.prototype.scatter = function(ray, intersection, depth) {
+Material.prototype.scatter = function(ray, intersection, roughness, depth) {
   var p = ray.at(intersection.t);
   var hitNormal = intersection.object.normal(p).times(-1);
-  var targ = hitNormal.add(Vector3.random(-1, 1));
-  var r = new Ray(p, targ);
+  var direction = Material.reflect(ray.direction, hitNormal.add(Vector3.random(-1, 1).times(roughness))); 
+  var r = new Ray(p, direction);
   return traceRay(r, depth); 
 }
 
