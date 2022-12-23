@@ -263,12 +263,12 @@ Plane.prototype.checkIntersection = function(ray) {
 var scene = {
   lights: [new Light(0, 4, -2, 1, "top light")],
   objects: [new Plane(0, -0.2, 1, new Vector3(0, 1, 0), new Material(0.7, 0.1, 0.5, new Vector3(61, 62, 64)), "floor"),
-            new Sphere(0.1, -0.145, 1.4, 0.055, new Material(0.05, 0.3, 0.5, new Vector3(175, 250, 201)), "1st row ball 1"),
-            new Sphere(0, -0.145, 1.4, 0.055, new Material(0.05, 0.3, 0.5, new Vector3(245, 175, 250)), "2nd row ball 2"),
-            new Sphere(-0.1, -0.145, 1.4, 0.055, new Material(0.05, 0.3, 0.5, new Vector3(250, 110, 129)), "1st row ball 3"),
-            new Sphere(0.05, -0.145, 1.3, 0.055, new Material(0.05, 0.3, 0.5, new Vector3(110, 115, 250)), "2nd row ball 1"),
-            new Sphere(-0.05, -0.145, 1.3, 0.055, new Material(0.05, 0.3, 0.5, new Vector3(161, 116, 112)), "2nd row ball 2"),
-            new Sphere(0, -0.145, 1.2, 0.055, new Material(0.05, 0.1, 0.5, new Vector3(245, 203, 86)), "3rd row ball 1"),
+            new Sphere(0.1, -0.145, 1.4, 0.055, new Material(0.7, 0.3, 0.5, new Vector3(175, 250, 201)), "1st row ball 1"),
+            new Sphere(0, -0.145, 1.4, 0.055, new Material(0.7, 0.3, 0.5, new Vector3(245, 175, 250)), "2nd row ball 2"),
+            new Sphere(-0.1, -0.145, 1.4, 0.055, new Material(0.7, 0.3, 0.5, new Vector3(250, 110, 129)), "1st row ball 3"),
+            new Sphere(0.05, -0.145, 1.3, 0.055, new Material(0.7, 0.3, 0.5, new Vector3(110, 115, 250)), "2nd row ball 1"),
+            new Sphere(-0.05, -0.145, 1.3, 0.055, new Material(0.7, 0.3, 0.5, new Vector3(161, 116, 112)), "2nd row ball 2"),
+            new Sphere(0, -0.145, 1.2, 0.055, new Material(0.7, 0.1, 0.5, new Vector3(245, 203, 86)), "3rd row ball 1"),
             new Sphere(0, -0.02, 1.3, 0.055, new Material(0.2, 0.7, 0.5, new Vector3(20, 20, 20)), "top mirror sphere")],
   camera: {
     pos: new Vector3(0, 0, 0),
