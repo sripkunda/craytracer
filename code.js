@@ -118,7 +118,7 @@ function computeColor(ray, intersection, depth) {
     var surfaceRay = new Ray(rayIntPoint, Material.reflect(ray.direction, surfaceNormal));
     reflection = traceRay(surfaceRay, depth).times(specularScale);
   }
-  return reflection.add(color.times(lambertianAmount)).add(color.times(object.material.ambient));
+  return reflection.add(color.times(lambertianAmount * lambertianScale)).add(color.times(object.material.ambient));
 }
 
 function closestIntersection(ray) {
