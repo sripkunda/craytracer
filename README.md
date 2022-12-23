@@ -1,4 +1,4 @@
-# Code.org Ray Tracing Engine
+# Craytracer: Code.org Ray Tracer
 
 A fully functional ray tracing engine made purely in Code.org. [Click here](https://studio.code.org/projects/applab/eekiHImihlW8Y-ChgntsNZX_hkgY_z_FxHLXCLbuzo8) to view the project on Code.org. 
 
