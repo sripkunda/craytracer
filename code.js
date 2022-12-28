@@ -91,36 +91,35 @@ function traceRay(ray, depth) {
 function computeColor(ray, intersection, depth) {
   var object = intersection.object; 
   var color = object.material.color;
-  var reflection = new Vector3(0, 0, 0);
+  var reflection = new Vector3(0, 0 ,0);
   var lights = scene.lights;
   var rayIntPoint = ray.at(intersection.t);
   var surfaceNormal = object.normal(rayIntPoint);
-  if (--depth < 1) return reflection;  
+  if (--depth < 1) return scene.camera.background;  
   
   
   // Apply Lambertian reflectance (diffuse)
-  var lambertianScale = object.material.diffuse; 
+  var roughness = object.material.diffuse; 
   var lambertianAmount = 0; 
-  if (lambertianScale > 0) {
-    for (var i = 0; i < lights.length; i++) {
-      var light = lights[i];
-      if (light.visible(rayIntPoint, object)) {
-        var L = light.position.subtract(rayIntPoint).normalize().inner(surfaceNormal) * light.intensity;
-        lambertianAmount += Math.max(L, 0);
-      }
+  for (var i = 0; i < lights.length; i++) {
+    var light = lights[i];
+    if (light.visible(rayIntPoint, object)) {
+      var L = light.position.subtract(rayIntPoint).normalize().inner(surfaceNormal) * light.intensity;
+      lambertianAmount += Math.max(L, 0);
     }
-    lambertianAmount = Math.min(lambertianAmount, 1); // To not blow up the colors
-    var rand = object.material.scatter(ray, intersection, lambertianScale, depth);
-    color.add(rand.times(Math.pow(1/2, depth))); // Scatter the light in a random direction for diffuse shading
   }
+  lambertianAmount = Math.min(lambertianAmount, 1); // To not blow up the color
   
   // Apply specular reflection
   var specularScale = object.material.specular; 
-  if (specularScale > 0) {
-    var surfaceRay = new Ray(rayIntPoint, Material.reflect(ray.direction, surfaceNormal));
-    reflection = traceRay(surfaceRay, depth).times(specularScale);
+  if (specularScale + roughness > 0) {
+    // Scatter the rays in the direction that we want based on the roughness of the surface
+    for (var i = 0; i < scene.camera.reflection_accumulation; i++) {
+      var surfaceRay = new Ray(rayIntPoint, Material.reflect(ray.direction, surfaceNormal.add(Vector3.random(-0.05, 0.05).times(roughness))));
+      reflection = reflection.add(traceRay(surfaceRay, depth).times(specularScale / scene.camera.reflection_accumulation));
+    }
   }
-  return reflection.add(color.times(lambertianAmount * lambertianScale)).add(color.times(object.material.ambient));
+  return reflection.add(color.times(lambertianAmount)).add(color.times(object.material.ambient));
 }
 
 function closestIntersection(ray) {
@@ -144,14 +143,6 @@ function Material(diffuse, specular, ambient, color) {
   this.diffuse = diffuse || 0;
   this.specular = specular || 0; 
   this.ambient = ambient || 0; 
-}
-
-Material.prototype.scatter = function(ray, intersection, roughness, depth) {
-  var p = ray.at(intersection.t);
-  var hitNormal = intersection.object.normal(p).times(-1);
-  var direction = Material.reflect(ray.direction, hitNormal.add(Vector3.random(-1, 1).times(roughness))); 
-  var r = new Ray(p, direction);
-  return traceRay(r, depth); 
 }
 
 Material.reflect = function (v, normal) {
@@ -263,15 +254,15 @@ Plane.prototype.checkIntersection = function(ray) {
 /* Render Scene */
 
 var scene = {
-  lights: [new Light(0, 4, -2, 1, "top light")],
-  objects: [new Plane(0, -0.2, 1, new Vector3(0, 1, 0), new Material(0.7, 0.1, 0.5, new Vector3(61, 62, 64)), "floor"),
-            new Sphere(0.1, -0.145, 1.4, 0.055, new Material(0.7, 0.3, 0.5, new Vector3(175, 250, 201)), "1st row ball 1"),
-            new Sphere(0, -0.145, 1.4, 0.055, new Material(0.7, 0.3, 0.5, new Vector3(245, 175, 250)), "2nd row ball 2"),
-            new Sphere(-0.1, -0.145, 1.4, 0.055, new Material(0.7, 0.3, 0.5, new Vector3(250, 110, 129)), "1st row ball 3"),
-            new Sphere(0.05, -0.145, 1.3, 0.055, new Material(0.7, 0.3, 0.5, new Vector3(110, 115, 250)), "2nd row ball 1"),
-            new Sphere(-0.05, -0.145, 1.3, 0.055, new Material(0.7, 0.3, 0.5, new Vector3(161, 116, 112)), "2nd row ball 2"),
-            new Sphere(0, -0.145, 1.2, 0.055, new Material(0.7, 0.1, 0.5, new Vector3(245, 203, 86)), "3rd row ball 1"),
-            new Sphere(0, -0.02, 1.3, 0.055, new Material(0.2, 0.7, 0.5, new Vector3(20, 20, 20)), "top mirror sphere")],
+  lights: [new Light(0, 10, -2, 1, "top light")],
+  objects: [new Plane(0, -0.2, 1, new Vector3(0, 1, 0), new Material(4, 0.3, 0.5, new Vector3(61, 62, 64)), "floor"),
+            new Sphere(0.1, -0.145, 1.4, 0.055, new Material(0.7, 0, 0.5, new Vector3(175, 250, 201)), "1st row ball 1"),
+            new Sphere(0, -0.145, 1.4, 0.055, new Material(0.7, 0, 0.5, new Vector3(245, 175, 250)), "2nd row ball 2"),
+            new Sphere(-0.1, -0.145, 1.4, 0.055, new Material(0.7, 0, 0.5, new Vector3(250, 110, 129)), "1st row ball 3"),
+            new Sphere(0.05, -0.145, 1.3, 0.055, new Material(0.7, 0, 0.5, new Vector3(110, 115, 250)), "2nd row ball 1"),
+            new Sphere(-0.05, -0.145, 1.3, 0.055, new Material(0.7, 0, 0.5, new Vector3(161, 116, 112)), "2nd row ball 2"),
+            new Sphere(0, -0.145, 1.2, 0.055, new Material(0.7, 0, 0.5, new Vector3(245, 203, 86)), "3rd row ball 1"),
+            new Sphere(0, -0.02, 1.3, 0.055, new Material(0, 0.7, 0.5, new Vector3(20, 20, 20)), "top mirror sphere")],
   camera: {
     pos: new Vector3(0, 0, 0),
     direction: new Vector3(0, 0, 1),
@@ -279,7 +270,8 @@ var scene = {
     up: new Vector3(0, 1, 0),
     antialiasing_samples_per_pixel: 1,
     ray_tracing_depth: 3,
-    background: new Vector3(0, 0, 0),
+    background: new Vector3(215, 226, 247),
+    reflection_accumulation: 15
   },
   image: {
     width: 320, 
